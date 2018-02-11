@@ -1,5 +1,7 @@
 package mcmquery
 
+import scala.annotation.tailrec
+
 abstract case class Command(word : String) {
 
   def done() : Boolean = false
@@ -31,14 +33,13 @@ object Main {
   new Command("list") { def execute() { println(Card.all.mkString("\n")) } }.register()
   new Command("quit") { def execute() { println("Bye") }; override def done() = true }.register()
 
+  @tailrec
   def run_shell() : Unit = {
-    var done = false
-    while (!done) {
-      val line = get_cmd()
-      Command.all.find(c => c.word == line(0)) match {
-        case None    => println("I do not understand.")
-        case Some(c) => c.execute(); done = c.done()
-      }
+    val line = get_cmd()
+    Command.all.find(c => c.word == line(0)) match {
+      case None                => println("I do not understand.")
+      case Some(c) if c.done() => c.execute()
+      case Some(c)             => c.execute(); run_shell()
     }
   }
 
